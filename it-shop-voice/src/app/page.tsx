@@ -32,13 +32,12 @@ export default function Home() {
 
     rec.onstart = () => {
       setIsListening(true);
-      setStatus("👂 กำลังตั้งใจฟัง... พูดมาได้เลย!");
+      setStatus("👂 กำลังตั้งใจฟัง... อยากได้อะไรพูดมาได้เลย!");
     };
 
     rec.onend = () => {
       setIsListening(false);
-      // ถ้าหยุดโดยยังไม่ได้ผลลัพธ์ (เช่น กดหยุดเอง) ให้รีเซ็ตสถานะ
-      setStatus((prev) => (prev.includes("กำลังส่ง") ? prev : "พักหูแป๊บ 💤"));
+      setStatus((prev) => (prev.includes("กำลังส่ง") || prev.includes("ได้ข้อความ") ? prev : "พักหูแป๊บ 💤"));
     };
 
     rec.onerror = (e: any) => {
@@ -49,7 +48,7 @@ export default function Home() {
 
     rec.onresult = async (event: any) => {
       const transcript = event.results?.[0]?.[0]?.transcript || "";
-      setStatus("🚀 ได้ข้อความแล้ว! กำลังวิ่งไปถามให้...");
+      setStatus("🚀 จดออเดอร์แล้ว! กำลังวิ่งไปหาของให้...");
       setResult({ transcript });
 
       try {
@@ -61,7 +60,7 @@ export default function Home() {
 
         const data: ApiResult = await resp.json();
         setResult(data);
-        setStatus(data.error ? "มีปัญหาในการตอบนิดหน่อย 🥺" : "ตอบเสร็จแล้วจ้า 🎉");
+        setStatus(data.error ? "มีปัญหาในการตอบนิดหน่อย 🥺" : "หาของเสร็จแล้วจ้า 🎉");
       } catch (err) {
          setStatus("เชื่อมต่อเซิร์ฟเวอร์ไม่ได้แฮะ 🥺");
       }
@@ -84,93 +83,113 @@ export default function Home() {
   }
 
   return (
-    // พื้นหลัง Gradient สีพาสเทลสดใส
-    <main className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-pink-100 via-purple-100 to-blue-100 font-sans">
+    // เปลี่ยนมาใช้ linear gradient แบบชัวร์ๆ บังคับสีโทนสว่าง ไม่ให้ติด Dark Mode
+    <main className="min-h-screen flex items-center justify-center p-4 sm:p-6 bg-gradient-to-br from-pink-100 via-purple-50 to-blue-100 font-sans selection:bg-purple-200 text-gray-800">
       
       {/* การ์ดหลักตรงกลาง */}
-      <div className="w-full max-w-2xl bg-white/80 backdrop-blur-sm rounded-3xl shadow-xl p-8 border border-white/50">
+      <div className="w-full max-w-2xl bg-white/70 backdrop-blur-xl rounded-[2.5rem] shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)] p-8 sm:p-10 border border-white relative overflow-hidden transition-all duration-500 hover:shadow-[0_20px_60px_-12px_rgba(0,0,0,0.15)]">
         
+        {/* แสงวิ้งๆ ตรงมุมขวาบน (ตกแต่ง) */}
+        <div className="absolute top-[-10%] right-[-10%] w-64 h-64 bg-gradient-to-br from-pink-200 to-purple-200 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+        <div className="absolute bottom-[-10%] left-[-10%] w-64 h-64 bg-gradient-to-tr from-blue-200 to-indigo-200 rounded-full blur-3xl opacity-50 pointer-events-none"></div>
+
         {/* หัวข้อ */}
-        <header className="text-center mb-8">
-          <h1 className="text-3xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">
-            🎤 IT Shop ผู้ช่วยเสียงใส
+        <header className="text-center mb-10 relative z-10">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white shadow-sm mb-4 border border-purple-100">
+            <span className="text-3xl">🧞‍♂️</span>
+          </div>
+          <h1 className="text-3xl sm:text-4xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-fuchsia-500 drop-shadow-sm tracking-tight">
+            AI ผู้ช่วยหาของสารพัดอย่าง
           </h1>
-          <p className="text-gray-500 mt-3 text-sm font-medium">
-            กดปุ่มเริ่มแล้วถามได้เลย เช่น <br/>
-            <span className="text-purple-400">"มี SSD 1TB ไหม ราคาเท่าไหร่คะ"</span> 🛍️
+          <p className="text-gray-500 mt-4 text-sm sm:text-base font-medium leading-relaxed">
+            กดปุ่มเริ่มแล้วบอกสิ่งที่คุณตามหาได้เลย เช่น <br className="hidden sm:block"/>
+            <span className="text-violet-600 bg-violet-100 px-2 py-0.5 rounded-md">"อยากได้หม้อทอดไร้น้ำมัน"</span> หรือ <span className="text-fuchsia-600 bg-fuchsia-100 px-2 py-0.5 rounded-md">"หากระเป๋าสีพาสเทล"</span> 🛍️
           </p>
         </header>
 
         {/* โซนปุ่มควบคุมและสถานะ */}
-        <div className="flex flex-col items-center gap-4 mb-8">
+        <div className="flex flex-col items-center gap-5 mb-10 relative z-10">
           
-          {/* ปุ่ม Start/Stop */}
           <div className="relative group">
             {/* เอฟเฟกต์แสงวิบวับตอนฟัง */}
             {isListening && (
-              <div className="absolute -inset-1 bg-gradient-to-r from-pink-400 to-purple-400 rounded-full blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-pulse"></div>
+              <div className="absolute -inset-2 bg-gradient-to-r from-fuchsia-400 to-violet-400 rounded-full blur-lg opacity-50 group-hover:opacity-70 transition duration-500 animate-pulse"></div>
             )}
             
             {!isListening ? (
               <button
-                className="relative px-8 py-3 rounded-full bg-gradient-to-r from-indigo-400 to-purple-400 text-white font-bold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200 active:scale-95 flex items-center gap-2"
+                className="relative px-8 py-3.5 rounded-full bg-gradient-to-r from-violet-500 to-fuchsia-500 text-white font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 active:scale-95 flex items-center gap-3"
                 onClick={start}
               >
-                <span>🎙️</span> เริ่มคุยกันเถอะ
+                <span className="bg-white/20 p-1.5 rounded-full">🎙️</span> 
+                <span>เริ่มบอกสิ่งที่อยากได้</span>
               </button>
             ) : (
               <button
-                className="relative px-8 py-3 rounded-full bg-gradient-to-r from-rose-400 to-orange-400 text-white font-bold text-lg shadow-md hover:shadow-lg transform hover:-translate-y-1 transition-all duration-200 active:scale-95 flex items-center gap-2"
+                className="relative px-8 py-3.5 rounded-full bg-gradient-to-r from-rose-500 to-orange-400 text-white font-bold text-lg shadow-lg hover:shadow-xl transform hover:-translate-y-1 transition-all duration-300 active:scale-95 flex items-center gap-3 ring-2 ring-white/50"
                 onClick={stop}
               >
-                <span>🛑</span> พอแค่นี้ก่อน
+                <span className="bg-white/20 p-1.5 rounded-full text-sm">🛑</span> 
+                <span>พอแค่นี้ก่อน</span>
               </button>
             )}
           </div>
 
           {/* แถบสถานะ */}
           <div
-            className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 flex items-center gap-2 shadow-sm border
+            className={`px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-500 flex items-center gap-2.5 shadow-sm border backdrop-blur-md
               ${isListening 
-                ? "bg-green-100 text-green-700 border-green-200 animate-pulse" 
-                : "bg-gray-100 text-gray-600 border-gray-200"
+                ? "bg-emerald-50 text-emerald-600 border-emerald-200 scale-105" 
+                : "bg-white/80 text-gray-500 border-gray-200"
               }`}
           >
-            {isListening && <span className="animate-spin">💫</span>}
+            {isListening && <span className="animate-spin text-emerald-500">💫</span>}
             {status}
           </div>
         </div>
 
         {/* โซนแสดงผลลัพธ์ */}
-        <section className="space-y-5">
+        <section className="space-y-6 relative z-10">
           
           {/* Bubble: สิ่งที่เราพูด */}
-          <div className={`transition-all duration-500 transform ${result.transcript ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+          <div className={`transition-all duration-700 ease-out transform ${result.transcript ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0 pointer-events-none'}`}>
             {result.transcript && (
-              <div className="bg-blue-50 p-5 rounded-2xl rounded-tr-sm shadow-sm border border-blue-100 ml-4 relative">
-                 <div className="absolute -top-3 -left-3 bg-blue-200 text-blue-800 rounded-full p-1 shadow-sm">🗣️</div>
-                <div className="font-semibold text-blue-800 mb-1">คุณลูกค้าพูดว่า:</div>
-                <div className="text-gray-700 leading-relaxed">“{result.transcript}”</div>
+              <div className="flex flex-col items-end">
+                <div className="flex items-end gap-2 max-w-[85%]">
+                  <div className="bg-blue-50 p-5 rounded-[1.5rem] rounded-tr-sm shadow-sm border border-blue-100">
+                    <div className="text-xs font-bold text-blue-500 mb-1 uppercase tracking-wider">You</div>
+                    <div className="text-blue-900 leading-relaxed font-medium">“{result.transcript}”</div>
+                  </div>
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center shadow-sm border border-white text-sm flex-shrink-0">
+                    🗣️
+                  </div>
+                </div>
               </div>
             )}
           </div>
 
           {/* Bubble: คำตอบจากระบบ */}
-          <div className={`transition-all duration-500 delay-100 transform ${result.answer || result.error ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0'}`}>
+          <div className={`transition-all duration-700 delay-150 ease-out transform ${result.answer || result.error ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0 pointer-events-none'}`}>
             {(result.answer || result.error) && (
-              <div
-                className={`p-5 rounded-2xl rounded-tl-sm shadow-sm border mr-4 relative
-                  ${result.error 
-                    ? "bg-red-50 border-red-100 text-red-700" 
-                    : "bg-purple-50 border-purple-100 text-purple-900"
-                  }`}
-              >
-                <div className="absolute -top-3 -right-3 bg-purple-200 text-purple-800 rounded-full p-1 shadow-sm">🤖</div>
-                <div className="font-semibold mb-1">
-                  {result.error ? "😿 น้องบอทแจ้งว่า:" : "✨ คำตอบคือ:"}
-                </div>
-                <div className="leading-relaxed whitespace-pre-wrap">
-                  {result.answer || result.error}
+              <div className="flex flex-col items-start mt-2">
+                <div className="flex items-end gap-2 max-w-[90%]">
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center shadow-sm border border-white text-lg flex-shrink-0 mb-1">
+                    🧞‍♂️
+                  </div>
+                  <div
+                    className={`p-5 rounded-[1.5rem] rounded-tl-sm shadow-sm border
+                      ${result.error 
+                        ? "bg-rose-50 border-rose-100 text-rose-800" 
+                        : "bg-white border-purple-100 text-gray-800"
+                      }`}
+                  >
+                    <div className={`text-xs font-bold mb-2 uppercase tracking-wider ${result.error ? 'text-rose-400' : 'text-purple-500'}`}>
+                      {result.error ? "System Error" : "Assistant"}
+                    </div>
+                    <div className="leading-relaxed whitespace-pre-wrap font-medium">
+                      {result.answer || result.error}
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
@@ -179,8 +198,8 @@ export default function Home() {
         </section>
 
         {/* Footer เล็กๆ */}
-        <div className="mt-8 text-center text-xs text-gray-400">
-          Powered by Web Speech API & Pastel Love 💖
+        <div className="mt-10 text-center text-xs font-medium text-gray-400 tracking-wide relative z-10">
+          Powered by Web Speech API & Universal Finder Magic 🎁
         </div>
 
       </div>
